@@ -1,0 +1,254 @@
+J<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>経費精算AI - レシート自動読み取り</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80'>📱</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">
+                <span class="logo">📱</span>
+                <span>経費精算AI</span>
+                <span class="badge">BETA</span>
+            </h1>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="monthlyTotal">¥0</span>
+                    <span class="stat-label">今月の経費</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="app-main">
+        <!-- レシート撮影エリア -->
+        <section class="capture-section">
+            <div class="capture-card">
+                <h2>レシート撮影・アップロード</h2>
+                <div class="capture-area" id="captureArea">
+                    <input type="file" id="receiptInput" accept="image/*" capture="camera" hidden>
+                    <label for="receiptInput" class="capture-button">
+                        <span class="camera-icon">📷</span>
+                        <span>レシートを撮影</span>
+                    </label>
+                    <div class="upload-hint">またはファイルをドラッグ&ドロップ</div>
+                </div>
+                
+                <!-- プレビューエリア -->
+                <div id="imagePreview" class="image-preview hidden">
+                    <img id="previewImg" alt="レシートプレビュー">
+                    <div class="ocr-status" id="ocrStatus"></div>
+                </div>
+                
+                <!-- AI解析結果 -->
+                <div id="ocrResult" class="ocr-result hidden">
+                    <h3>🤖 AI解析結果</h3>
+                    <div class="extracted-data">
+                        <div class="data-field">
+                            <label>店舗名</label>
+                            <input type="text" id="storeName" placeholder="自動検出中...">
+                        </div>
+                        <div class="data-field">
+                            <label>日付</label>
+                            <input type="date" id="expenseDate">
+                        </div>
+                        <div class="data-field">
+                            <label>金額（税込）</label>
+                            <input type="number" id="amount" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 経費入力フォーム -->
+        <section class="input-section">
+            <div class="expense-form">
+                <h2>経費詳細</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>カテゴリー <span class="required">*</span></label>
+                        <select id="category" class="form-control">
+                            <option value="">選択してください</option>
+                            <option value="交通費">🚃 交通費</option>
+                            <option value="会議費">☕ 会議費</option>
+                            <option value="接待交際費">🍽️ 接待交際費</option>
+                            <option value="消耗品費">📎 消耗品費</option>
+                            <option value="通信費">📱 通信費</option>
+                            <option value="図書研究費">📚 図書研究費</option>
+                            <option value="旅費交通費">✈️ 旅費交通費</option>
+                            <option value="その他">📝 その他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>支払方法</label>
+                        <select id="paymentMethod" class="form-control">
+                            <option value="現金">💵 現金</option>
+                            <option value="クレジットカード">💳 クレジットカード</option>
+                            <option value="電子マネー">📱 電子マネー</option>
+                            <option value="銀行振込">🏦 銀行振込</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>プロジェクト/クライアント</label>
+                        <input type="text" id="project" class="form-control" placeholder="例：A社案件">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>備考</label>
+                        <input type="text" id="memo" class="form-control" placeholder="例：打ち合わせ">
+                    </div>
+                </div>
+                
+                <!-- インボイス対応 -->
+                <div class="invoice-section">
+                    <h3>インボイス情報</h3>
+                    <div class="tax-calculation">
+                        <div class="tax-row">
+                            <span>税抜金額：</span>
+                            <span id="taxExcluded">¥0</span>
+                        </div>
+                        <div class="tax-row">
+                            <span>消費税（10%）：</span>
+                            <span id="taxAmount">¥0</span>
+                        </div>
+                        <div class="tax-row">
+                            <span>消費税（8%）：</span>
+                            <span id="taxAmount8">¥0</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>インボイス番号（任意）</label>
+                        <input type="text" id="invoiceNumber" class="form-control" placeholder="T1234567890123">
+                    </div>
+                </div>
+                
+                <button id="saveExpense" class="btn btn-primary">
+                    <span>💾</span> 経費を保存
+                </button>
+            </div>
+        </section>
+
+        <!-- 経費一覧 -->
+        <section class="list-section">
+            <div class="list-header">
+                <h2>経費一覧</h2>
+                <div class="list-actions">
+                    <button id="exportCSV" class="btn btn-secondary">
+                        <span>📊</span> CSVエクスポート
+                    </button>
+                    <button id="generateReport" class="btn btn-secondary">
+                        <span>📄</span> 月次レポート
+                    </button>
+                </div>
+            </div>
+            
+            <!-- フィルター -->
+            <div class="filter-bar">
+                <select id="filterMonth" class="filter-control">
+                    <option value="">全期間</option>
+                </select>
+                <select id="filterCategory" class="filter-control">
+                    <option value="">全カテゴリー</option>
+                </select>
+                <input type="text" id="searchBox" class="filter-control" placeholder="🔍 検索...">
+            </div>
+            
+            <!-- 経費リスト -->
+            <div id="expenseList" class="expense-list">
+                <div class="empty-state">
+                    <span class="empty-icon">📋</span>
+                    <p>まだ経費が登録されていません</p>
+                    <p class="empty-hint">レシートを撮影して始めましょう</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 統計ダッシュボード -->
+        <section class="stats-section">
+            <h2>📊 統計ダッシュボード</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalExpenses">0</div>
+                        <div class="stat-label">総経費件数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalAmount">¥0</div>
+                        <div class="stat-label">総経費金額</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="avgDaily">¥0</div>
+                        <div class="stat-label">日平均</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏷️</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="topCategory">-</div>
+                        <div class="stat-label">最多カテゴリー</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- カテゴリー別集計 -->
+            <div class="category-breakdown">
+                <h3>カテゴリー別集計</h3>
+                <div id="categoryChart" class="chart-container"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- フローティングアクションボタン -->
+    <button class="fab" id="quickAddBtn">
+        <span>+</span>
+    </button>
+
+    <!-- モーダル -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>月次経費レポート</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="reportContent" class="report-content">
+                <!-- レポート内容がここに生成される -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="printReport()" class="btn btn-primary">印刷</button>
+                <button onclick="downloadPDF()" class="btn btn-secondary">PDF保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- プログレスバー -->
+    <div id="progressBar" class="progress-bar hidden">
+        <div class="progress-fill"></div>
+        <span class="progress-text">処理中...</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

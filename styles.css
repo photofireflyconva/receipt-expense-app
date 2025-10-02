@@ -1,0 +1,853 @@
+/* ==================== リセット・基本設定 ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #4F46E5;
+    --primary-dark: #4338CA;
+    --secondary: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --info: #3B82F6;
+    --dark: #1F2937;
+    --gray: #6B7280;
+    --light: #F3F4F6;
+    --white: #FFFFFF;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: var(--dark);
+}
+
+/* ==================== ヘッダー ==================== */
+.app-header {
+    background: var(--white);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.logo {
+    font-size: 2rem;
+}
+
+.badge {
+    background: var(--warning);
+    color: var(--white);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.header-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: right;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary);
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--gray);
+}
+
+/* ==================== メインコンテンツ ==================== */
+.app-main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* ==================== カード共通 ==================== */
+.capture-card,
+.expense-form,
+.list-section,
+.stats-section {
+    background: var(--white);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+h2 {
+    color: var(--dark);
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+h3 {
+    color: var(--dark);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+/* ==================== レシート撮影エリア ==================== */
+.capture-area {
+    border: 2px dashed var(--light);
+    border-radius: 0.5rem;
+    padding: 3rem;
+    text-align: center;
+    transition: all 0.3s;
+    background: var(--light);
+}
+
+.capture-area.dragover {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.capture-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary);
+    color: var(--white);
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.capture-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.camera-icon {
+    font-size: 1.5rem;
+}
+
+.upload-hint {
+    margin-top: 1rem;
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+
+/* ==================== プレビューエリア ==================== */
+.image-preview {
+    margin-top: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-preview img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 0.5rem;
+}
+
+.ocr-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--info);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ==================== OCR結果 ==================== */
+.ocr-result {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--light);
+    border-radius: 0.5rem;
+}
+
+.extracted-data {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.data-field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--gray);
+}
+
+.data-field input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--light);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* ==================== フォーム ==================== */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.required {
+    color: var(--danger);
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* ==================== インボイスセクション ==================== */
+.invoice-section {
+    background: var(--light);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+.tax-calculation {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tax-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: var(--white);
+    border-radius: 0.25rem;
+}
+
+.tax-row span:last-child {
+    font-weight: bold;
+    color: var(--primary);
+}
+
+/* ==================== ボタン ==================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.btn-secondary {
+    background: var(--light);
+    color: var(--dark);
+}
+
+.btn-secondary:hover {
+    background: #E5E7EB;
+}
+
+#saveExpense {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem;
+    padding: 1rem;
+}
+
+/* ==================== リスト ==================== */
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.list-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-control {
+    padding: 0.5rem;
+    border: 1px solid var(--light);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    flex: 1;
+    min-width: 150px;
+}
+
+/* ==================== 経費アイテム ==================== */
+.expense-item {
+    background: var(--white);
+    border: 1px solid var(--light);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.expense-item:hover {
+    box-shadow: var(--shadow);
+    transform: translateX(4px);
+}
+
+.expense-main {
+    flex: 1;
+}
+
+.expense-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.expense-category {
+    background: var(--primary);
+    color: var(--white);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.expense-amount {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--dark);
+}
+
+.expense-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--gray);
+}
+
+.expense-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.action-btn {
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+    border-radius: 0.25rem;
+}
+
+.action-btn:hover {
+    background: var(--light);
+}
+
+/* ==================== 統計 ==================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--white);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-card:nth-child(2) {
+    background: linear-gradient(135deg, var(--secondary), #059669);
+}
+
+.stat-card:nth-child(3) {
+    background: linear-gradient(135deg, var(--warning), #DC2626);
+}
+
+.stat-card:nth-child(4) {
+    background: linear-gradient(135deg, var(--info), #2563EB);
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* ==================== カテゴリーチャート ==================== */
+.category-breakdown {
+    margin-top: 2rem;
+}
+
+.chart-container {
+    background: var(--light);
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.chart-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.chart-label {
+    width: 120px;
+    font-size: 0.875rem;
+    color: var(--dark);
+}
+
+.chart-progress {
+    flex: 1;
+    height: 24px;
+    background: #E5E7EB;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    margin: 0 0.5rem;
+}
+
+.chart-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s;
+}
+
+.chart-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark);
+    min-width: 80px;
+    text-align: right;
+}
+
+/* ==================== 空の状態 ==================== */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.empty-hint {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* ==================== FAB ==================== */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s;
+    z-index: 99;
+}
+
+.fab:hover {
+    transform: scale(1.1) rotate(90deg);
+    background: var(--primary-dark);
+}
+
+/* ==================== モーダル ==================== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--white);
+    border-radius: 0.5rem;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.report-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--light);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* ==================== 通知 ==================== */
+.notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--white);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(400px);
+    transition: transform 0.3s;
+    z-index: 2000;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left: 4px solid var(--secondary);
+}
+
+.notification.error {
+    border-left: 4px solid var(--danger);
+}
+
+/* ==================== プログレスバー ==================== */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--light);
+    z-index: 2001;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0;
+    transition: width 0.3s;
+    animation: progress 2s infinite;
+}
+
+@keyframes progress {
+    0% { width: 0; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+}
+
+.progress-text {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: var(--white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+}
+
+/* ==================== ユーティリティ ==================== */
+.hidden {
+    display: none !important;
+}
+
+/* ==================== レスポンシブ ==================== */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .app-main {
+        padding: 0 0.5rem;
+    }
+    
+    .capture-card,
+    .expense-form,
+    .list-section,
+    .stats-section {
+        padding: 1rem;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .list-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .list-actions {
+        flex-direction: column;
+    }
+    
+    .expense-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .expense-actions {
+        margin-top: 1rem;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-bar {
+        flex-direction: column;
+    }
+    
+    .filter-control {
+        width: 100%;
+    }
+}
+
+/* ==================== 印刷用スタイル ==================== */
+@media print {
+    body {
+        background: white;
+    }
+    
+    .app-header,
+    .fab,
+    .capture-section,
+    .filter-bar,
+    .list-actions {
+        display: none !important;
+    }
+    
+    .expense-item {
+        page-break-inside: avoid;
+    }
+}
+
+/* ==================== モバイル最適化 ==================== */
+@media (max-width: 768px) {
+    /* タップターゲットを44px以上に */
+    .btn, 
+    .capture-button,
+    .action-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* カメラボタンを画面下部に固定 */
+    .capture-button {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        width: 80%;
+        max-width: 300px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    /* 入力フィールドを大きく */
+    .form-control {
+        font-size: 16px; /* iOS自動ズーム防止 */
+        padding: 12px;
+    }
+
+    /* スワイプ削除のヒント表示 */
+    .expense-item::after {
+        content: '← スワイプで削除';
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #ccc;
+        font-size: 10px;
+        opacity: 0.5;
+    }
+
+    /* フローティングアクションボタンを大きく */
+    .fab {
+        width: 64px;
+        height: 64px;
+        font-size: 2rem;
+    }
+}
+
+/* iPhone X以降のノッチ対応 */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .app-main {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .fab {
+        bottom: calc(2rem + env(safe-area-inset-bottom));
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --white: #1a1a1a;
+        --dark: #ffffff;
+        --light: #2a2a2a;
+        /* 他の色も調整 */
+    }
+}
+
+/* 横向き対応 */
+@media (orientation: landscape) and (max-width: 812px) {
+    .app-header {
+        position: static;
+    }
+    
+    .capture-button {
+        position: static;
+        margin: 1rem auto;
+    }
+}
