@@ -10,6 +10,101 @@ J<!DOCTYPE html>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body>
+    <!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>経費精算AI - レシート自動読み取り</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    
+    <!-- Google Drive同期用スタイル -->
+    <style>
+    .sync-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sync-status-bar {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    #googleSignInBtn {
+        background: white;
+        color: #4285f4;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .sync-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+    
+    #syncStatus.active { color: #4ade80; }
+    
+    #syncIndicator.active {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    </style>
+</head>
+<body>
+    <!-- Google Drive同期バー（最上部） -->
+    <div class="sync-container">
+        <div class="sync-status-bar">
+            <button id="googleSignInBtn" class="btn btn-primary">
+                🔐 Googleドライブと連携
+            </button>
+            <div class="sync-info">
+                <span id="syncStatus">❌ 同期: OFF</span>
+                <span id="syncIndicator"></span>
+                <span id="lastSyncTime"></span>
+            </div>
+            <button id="manualSyncBtn" class="btn btn-secondary" style="display: none;">
+                🔄 今すぐ同期
+            </button>
+        </div>
+    </div>
+
+    <!-- 既存のヘッダー -->
+    <header class="app-header">
+        <!-- 既存のヘッダーコンテンツ -->
+    </header>
+
+    <!-- 既存のメインコンテンツ -->
+    <main class="app-main">
+        <!-- 既存のメインコンテンツ -->
+    </main>
+
+    <!-- スクリプト読み込み -->
+    <script src="app.js"></script>
+    <script src="google-sync.js"></script>
+</body>
+</html>
+
     <!-- ヘッダー -->
     <header class="app-header">
         <div class="header-content">
@@ -251,4 +346,5 @@ J<!DOCTYPE html>
     <script src="app.js"></script>
 </body>
 </html>
+
 
