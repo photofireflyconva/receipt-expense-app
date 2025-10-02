@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプルDriveテスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #0f9d58; }
+        .error { color: #ea4335; }
+        .info { color: #4285f4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Google Drive 連携テスト（シンプル版）</h1>
+        
+        <div>
+            <button id="startBtn" onclick="startTest()">テスト開始</button>
+            <button id="signOutBtn" onclick="signOut()" style="display:none;">ログアウト</button>
+        </div>
+        
+        <div id="output"></div>
+    </div>
+
+    <script>
+        // =============================================
+        // ここにあなたの認証情報を入力してください
+        // =============================================
+        const CLIENT_ID = '179874464431-2gkjdolnfd9tbooegigp5upmkme4rbfh.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyC0RxZKGhuL6aE9usKKYzBMT9zu13P_mXw';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        
+        let gapiLoaded = false;
+        let authInstance = null;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const time = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${time}] ${message}</span>\n`;
+            console.log(`[${type}] ${message}`);
+        }
+        
+        function startTest() {
+            document.getElementById('startBtn').disabled = true;
+            log('テスト開始...', 'info');
+            
+            // CLIENT_IDとAPI_KEYのチェック
+            if (CLIENT_ID.includes('あなたの')) {
+                log('❌ CLIENT_IDを設定してください！', 'error');
+                return;
+            }
+            if (API_KEY.includes('あなたの')) {
+                log('❌ API_KEYを設定してください！', 'error');
+                return;
+            }
+            
+            loadGoogleAPI();
+        }
+        
+        function loadGoogleAPI() {
+            log('Google APIを読み込み中...', 'info');
+            
+            const script = document.createElement('script');
+            script.src = 'https://apis.google.com/js/api.js';
+            script.onload = () => {
+                log('✅ Google API読み込み完了', 'success');
+                initializeGAPI();
+            };
+            script.onerror = () => {
+                log('❌ Google API読み込み失敗', 'error');
+            };
+            document.body.appendChild(script);
+        }
+        
+        function initializeGAPI() {
+            log('gapi初期化中...', 'info');
+            
+            gapi.load('client:auth2', () => {
+                log('auth2モジュール読み込み完了', 'info');
+                
+                // Discovery Docsなしで初期化
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    clientId: CLIENT_ID,
+                    scope: SCOPES
+                }).then(() => {
+                    log('✅ gapi.client初期化成功', 'success');
+                    
+                    authInstance = gapi.auth2.getAuthInstance();
+                    
+                    // サインイン状態をチェック
+                    if (authInstance.isSignedIn.get()) {
+                        log('✅ 既にサインイン済み', 'success');
+                        onSignIn();
+                    } else {
+                        log('サインインが必要です', 'info');
+                        signIn();
+                    }
+                    
+                }).catch(error => {
+                    log('❌ 初期化エラー: ' + JSON.stringify(error), 'error');
+                    console.error('詳細エラー:', error);
+                });
+            });
+        }
+        
+        function signIn() {
+            log('サインイン開始...', 'info');
+            
+            authInstance.signIn().then(() => {
+                log('✅ サインイン成功', 'success');
+                onSignIn();
+            }).catch(error => {
+                log('❌ サインインエラー: ' + JSON.stringify(error), 'error');
+            });
+        }
+        
+        function onSignIn() {
+            const user = authInstance.currentUser.get();
+            const profile = user.getBasicProfile();
+            log(`ユーザー: ${profile.getEmail()}`, 'success');
+            
+            document.getElementById('signOutBtn').style.display = 'inline-block';
+            
+            // アクセストークンを取得
+            const authResponse = user.getAuthResponse();
+            log('アクセストークン取得済み', 'success');
+            
+            testDriveAPI(authResponse.access_token);
+        }
+        
+        function testDriveAPI(accessToken) {
+            log('\n=== Drive APIテスト開始 ===', 'info');
+            
+            // シンプルなファイルリスト取得
+            fetch('https://www.googleapis.com/drive/v3/files?pageSize=5', {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            }).then(response => response.json())
+            .then(data => {
+                log('✅ Drive API応答成功', 'success');
+                
+                if (data.files && data.files.length > 0) {
+                    log(`ファイル数: ${data.files.length}`, 'info');
+                    data.files.forEach(file => {
+                        log(`  📄 ${file.name}`, 'info');
+                    });
+                } else {
+                    log('ファイルが見つかりません（正常）', 'info');
+                }
+                
+                // テストファイル作成
+                createTestFile(accessToken);
+                
+            }).catch(error => {
+                log('❌ Drive APIエラー: ' + error, 'error');
+            });
+        }
+        
+        function createTestFile(accessToken) {
+            log('\nテストファイル作成中...', 'info');
+            
+            const metadata = {
+                name: 'test_' + Date.now() + '.json',
+                mimeType: 'application/json'
+            };
+            
+            const fileContent = {
+                test: true,
+                timestamp: new Date().toISOString(),
+                message: 'Receipt App Test File'
+            };
+            
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([JSON.stringify(fileContent)], { type: 'application/json' }));
+            
+            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                body: form
+            }).then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    log('✅ ファイル作成成功！', 'success');
+                    log(`  ファイルID: ${data.id}`, 'success');
+                    log(`  ファイル名: ${data.name}`, 'success');
+                    log('\n🎉 すべてのテストが成功しました！', 'success');
+                } else {
+                    log('❌ ファイル作成失敗: ' + JSON.stringify(data), 'error');
+                }
+            }).catch(error => {
+                log('❌ アップロードエラー: ' + error, 'error');
+            });
+        }
+        
+        function signOut() {
+            if (authInstance) {
+                authInstance.signOut().then(() => {
+                    log('✅ ログアウトしました', 'success');
+                    document.getElementById('signOutBtn').style.display = 'none';
+                    document.getElementById('startBtn').disabled = false;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
