@@ -824,23 +824,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Service Worker登録（PWA対応）
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/receipt-expense-app/sw.js').catch(function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-        });
-    });
-}
-
-// ==================== PWA対応 ====================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('ServiceWorker registration failed: ', err);
-        });
-    });
-}
 
 // モバイル検出と最適化
 class MobileOptimizer {

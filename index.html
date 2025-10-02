@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
-               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.gstatic.com; 
-               style-src 'self' 'unsafe-inline';">
+     <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; 
+               script-src * 'unsafe-inline' 'unsafe-eval'; 
+               connect-src *; 
+               img-src * data: blob: 'unsafe-inline'; 
+               frame-src *; 
+               style-src * 'unsafe-inline';">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>経費精算AI - レシート自動読み取り</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80'>📱</text></svg>">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     
     <!-- Google Drive同期用スタイル -->
     <style>
@@ -64,6 +67,8 @@
     }
     </style>
 </head>
+<!-- Google API Client Library -->
+<script src="https://apis.google.com/js/api.js"></script>
 <body>
     <!-- Google Drive同期バー（最上部） -->
     <div class="sync-container">
@@ -324,7 +329,7 @@
     <script src="app.js"></script>
     
     <!-- Google API -->
-    <script src="https://apis.google.com/js/api.js"></script>
+     <script src="https://accounts.google.com/gsi/client"></script>
     
     <!-- Google Drive同期（インライン版） -->
     <script>
