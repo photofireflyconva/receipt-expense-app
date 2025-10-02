@@ -31,41 +31,75 @@ class GoogleDriveSync {
 
     // Google API読み込み
     loadGoogleAPI() {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://apis.google.com/js/api.js';
-            script.onload = () => {
-                gapi.load('client:auth2', async () => {
-                    try {
-                        await gapi.client.init({
-                            apiKey: this.API_KEY,
-                            clientId: this.CLIENT_ID,
-                            discoveryDocs: this.DISCOVERY_DOCS,
-                            scope: this.SCOPES
-                        });
+    return new Promise((resolve, reject) => {
+        // 既にgapiが読み込まれているか確認
+        if (typeof gapi !== 'undefined') {
+            console.log('gapi already loaded');
+            gapi.load('client:auth2', async () => {
+                try {
+                    await gapi.client.init({
+                        apiKey: this.API_KEY,
+                        clientId: this.CLIENT_ID,
+                        discoveryDocs: this.DISCOVERY_DOCS,
+                        scope: this.SCOPES
+                    });
+                    
+                    this.auth = gapi.auth2.getAuthInstance();
+                    this.auth.isSignedIn.listen((isSignedIn) => {
+                        this.handleSignInStatus(isSignedIn);
+                    });
+                    
+                    this.handleSignInStatus(this.auth.isSignedIn.get());
+                    this.isInitialized = true;
+                    resolve();
+                } catch (error) {
+                    console.error('gapi.client.init error:', error);
+                    reject(error);
+                }
+            });
+            return;
+        }
+        
+        // gapiが読み込まれていない場合
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+            gapi.load('client:auth2', async () => {
+                try {
+                    await gapi.client.init({
+                        apiKey: this.API_KEY,
+                        clientId: this.CLIENT_ID,
+                        discoveryDocs: this.DISCOVERY_DOCS,
+                        scope: this.SCOPES
+                    });
+                    
+                    this.auth = gapi.auth2.getAuthInstance();
+                    this.auth.isSignedIn.listen((isSignedIn) => {
+                        this.handleSignInStatus(isSignedIn);
+                    });
+                    
+                    this.handleSignInStatus(this.auth.isSignedIn.get());
+                    this.isInitialized = true;
+                    resolve();
+                } catch (error) {
+                    console.error('gapi.client.init error:', error);
+                    reject(error);
+                }
+            });
+        };
+        
+        script.onerror = (error) => {
+            console.error('Failed to load Google API:', error);
+            reject(error);
+        };
+        
+        document.head.appendChild(script);
+    });
+}
 
-                        // 認証インスタンス取得
-                        this.auth = gapi.auth2.getAuthInstance();
-                        
-                        // サインイン状態を監視
-                        this.auth.isSignedIn.listen((isSignedIn) => {
-                            this.handleSignInStatus(isSignedIn);
-                        });
-
-                        // 初期状態確認
-                        this.handleSignInStatus(this.auth.isSignedIn.get());
-                        this.isInitialized = true;
-                        
-                        resolve();
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            };
-            script.onerror = reject;
-            document.body.appendChild(script);
-        });
-    }
 
     // サインイン状態の処理
     handleSignInStatus(isSignedIn) {
@@ -392,4 +426,5 @@ class GoogleDriveSync {
         }
     }
 }
+
 
