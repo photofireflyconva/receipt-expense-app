@@ -771,8 +771,35 @@ function downloadPDF() {
     // 実際のPDF生成にはjsPDFなどのライブラリが必要
 }
 
-// ==================== アプリ初期化 ====================
-const expenseManager = new ExpenseManager();
+// ==================== アプリケーション初期化 ====================
+let expenseManager;
+let googleSync;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // 基本のExpenseManagerを初期化
+        expenseManager = new ExpenseManager();
+        window.expenseManager = expenseManager;
+        
+        // Google Drive同期を別途初期化（エラーが出ても基本機能は動く）
+        if (typeof GoogleDriveSync !== 'undefined') {
+            console.log('Initializing Google Drive Sync...');
+            googleSync = new GoogleDriveSync();
+            await googleSync.init();
+            window.googleSync = googleSync;
+            console.log('Google Drive Sync initialized');
+        } else {
+            console.warn('GoogleDriveSync not found - running without sync');
+        }
+    } catch (error) {
+        console.error('Initialization error:', error);
+        // エラーが出ても基本機能は動かす
+        if (!expenseManager) {
+            expenseManager = new ExpenseManager();
+            window.expenseManager = expenseManager;
+        }
+    }
+});
 
 // ==================== PWA対応 ====================
 if ('serviceWorker' in navigator) {
@@ -897,4 +924,5 @@ window.addEventListener('beforeinstallprompt', (e) => {
     };
     
     document.body.appendChild(installButton);
+
 });
