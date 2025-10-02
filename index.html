@@ -9,7 +9,74 @@ J<!DOCTYPE html>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
-    <script src="https://apis.google.com/js/api.js"></script>
+     <script>
+        // Google API設定
+        window.googleAPIConfig = {
+            CLIENT_ID: 'あなたのCLIENT_ID.apps.googleusercontent.com',
+            API_KEY: 'あなたのAPI_KEY',
+            DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            SCOPES: 'https://www.googleapis.com/auth/drive.file'
+        };
+        
+        // Google APIの初期化
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+        
+        function initClient() {
+            gapi.client.init({
+                apiKey: window.googleAPIConfig.API_KEY,
+                clientId: window.googleAPIConfig.CLIENT_ID,
+                discoveryDocs: window.googleAPIConfig.DISCOVERY_DOCS,
+                scope: window.googleAPIConfig.SCOPES
+            }).then(function() {
+                console.log('✅ Google API initialized successfully!');
+                
+                // サインイン状態を監視
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+                
+                // ボタンにイベントを設定
+                const btn = document.getElementById('googleSignInBtn');
+                if (btn) {
+                    btn.onclick = handleAuthClick;
+                }
+            }, function(error) {
+                console.error('❌ Error initializing Google API:', error);
+            });
+        }
+        
+        function updateSigninStatus(isSignedIn) {
+            const statusEl = document.getElementById('syncStatus');
+            if (statusEl) {
+                if (isSignedIn) {
+                    statusEl.innerHTML = '✅ 同期: ON';
+                    statusEl.classList.add('active');
+                    document.getElementById('googleSignInBtn').innerHTML = '🔓 Googleアカウント切断';
+                } else {
+                    statusEl.innerHTML = '❌ 同期: OFF';
+                    statusEl.classList.remove('active');
+                    document.getElementById('googleSignInBtn').innerHTML = '🔐 Googleドライブと連携';
+                }
+            }
+        }
+        
+        function handleAuthClick() {
+            if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                gapi.auth2.getAuthInstance().signOut();
+            } else {
+                gapi.auth2.getAuthInstance().signIn();
+            }
+        }
+    </script>
+    
+    <!-- Google APIライブラリを読み込む -->
+    <script async defer src="https://apis.google.com/js/api.js"
+            onload="handleClientLoad()">
+    </script>
+    
+    <!-- google-sync.jsは一旦コメントアウト -->
+    <!-- <script src="google-sync.js"></script> -->
 <body>
     <!DOCTYPE html>
 <html lang="ja">
@@ -347,6 +414,7 @@ J<!DOCTYPE html>
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
