@@ -1,4 +1,10 @@
 // ==================== Google Drive同期システム ====================
+if (window.__GAPI_INITIALIZED__) {      // すでに初期化済みなら
+  console.log('gapi already init – skip'); 
+  return;                               // 以降の処理を中断
+}
+window.__GAPI_INITIALIZED__ = true;
+
 class GoogleDriveSync {
     constructor() {
         // 179874464431-2gkjdolnfd9tbooegigp5upmkme4rbfh.apps.googleusercontent.com
@@ -426,5 +432,6 @@ class GoogleDriveSync {
         }
     }
 }
+
 
 
