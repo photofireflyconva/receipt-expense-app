@@ -772,34 +772,66 @@ function downloadPDF() {
 }
 
 // ==================== アプリケーション初期化 ====================
-let expenseManager;
-let googleSync;
+// グローバル変数として宣言（letやconstを使わない）
+var expenseManager;
 
-document.addEventListener('DOMContentLoaded', async () => {
+// DOMContentLoadedで初期化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing app...');
+    
+    // ExpenseManagerを初期化
     try {
-        // 基本のExpenseManagerを初期化
         expenseManager = new ExpenseManager();
         window.expenseManager = expenseManager;
-        
-        // Google Drive同期を別途初期化（エラーが出ても基本機能は動く）
-        if (typeof GoogleDriveSync !== 'undefined') {
-            console.log('Initializing Google Drive Sync...');
-            googleSync = new GoogleDriveSync();
-            await googleSync.init();
-            window.googleSync = googleSync;
-            console.log('Google Drive Sync initialized');
-        } else {
-            console.warn('GoogleDriveSync not found - running without sync');
-        }
+        console.log('ExpenseManager initialized successfully');
     } catch (error) {
-        console.error('Initialization error:', error);
-        // エラーが出ても基本機能は動かす
-        if (!expenseManager) {
-            expenseManager = new ExpenseManager();
-            window.expenseManager = expenseManager;
-        }
+        console.error('Failed to initialize ExpenseManager:', error);
+    }
+    
+    // Googleドライブ連携ボタンの設定
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    if (googleSignInBtn) {
+        console.log('Setting up Google Sign In button...');
+        
+        googleSignInBtn.addEventListener('click', function() {
+            console.log('Google Sign In button clicked');
+            
+            // GoogleDriveSyncの初期化を試みる
+            if (typeof GoogleDriveSync !== 'undefined') {
+                if (!window.googleSync) {
+                    try {
+                        window.googleSync = new GoogleDriveSync();
+                        window.googleSync.init().then(function() {
+                            console.log('Google Drive Sync initialized');
+                            window.googleSync.toggleSignIn();
+                        }).catch(function(error) {
+                            console.error('Google Drive Sync init error:', error);
+                            alert('Google Drive連携の初期化に失敗しました');
+                        });
+                    } catch (error) {
+                        console.error('Failed to create GoogleDriveSync:', error);
+                    }
+                } else {
+                    window.googleSync.toggleSignIn();
+                }
+            } else {
+                console.error('GoogleDriveSync class not found');
+                alert('Google Drive同期機能が読み込まれていません');
+            }
+        });
+    } else {
+        console.error('Google Sign In button not found');
     }
 });
+
+// Service Worker登録（PWA対応）
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/receipt-expense-app/sw.js').catch(function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
 
 // ==================== PWA対応 ====================
 if ('serviceWorker' in navigator) {
@@ -926,3 +958,4 @@ window.addEventListener('beforeinstallprompt', (e) => {
     document.body.appendChild(installButton);
 
 });
+
