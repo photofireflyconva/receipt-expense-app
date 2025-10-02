@@ -1,13 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-     <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; 
-               script-src * 'unsafe-inline' 'unsafe-eval'; 
-               connect-src *; 
-               img-src * data: blob: 'unsafe-inline'; 
-               frame-src *; 
-               style-src * 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>経費精算AI - レシート自動読み取り</title>
@@ -67,8 +62,17 @@
     }
     </style>
 </head>
-<!-- Google API Client Library -->
+<!-- Google APIs (gapi) を先に読み込む -->
 <script src="https://apis.google.com/js/api.js"></script>
+<script>
+    // gapiが読み込まれたら初期化
+    function handleClientLoad() {
+        gapi.load('client:auth2', function() {
+            console.log('GAPI client loaded');
+        });
+    }
+</script>
+<script src="https://apis.google.com/js/api.js?onload=handleClientLoad"></script>
 <body>
     <!-- Google Drive同期バー（最上部） -->
     <div class="sync-container">
@@ -334,10 +338,9 @@
     <!-- Google Drive同期（インライン版） -->
     <script>
     // ==================== 設定 ====================
-    // ここにあなたの認証情報を入力してください！
-    const GOOGLE_CONFIG = {
-        CLIENT_ID: '179874464431-2gkjdolnfd9tbooegigp5upmkme4rbfh.apps.googleusercontent.com',  // 必ず変更
-        API_KEY: 'AIzaSyC0RxZKGhuL6aE9usKKYzBMT9zu13P_mXw',  // 必ず変更
+        const GOOGLE_CONFIG = {
+        CLIENT_ID: '179874464431-2gkjdolnfd9tbooegigp5upmkme4rbfh.apps.googleusercontent.com',
+        API_KEY: 'AIzaSyC0RxZKGhuL6aE9usKKYzBMT9zu13P_mXw',
         SCOPES: 'https://www.googleapis.com/auth/drive.file'
     };
     
@@ -350,15 +353,19 @@
         }
         
         async init() {
+            // gapiが存在することを確認
+            if (typeof gapi === 'undefined') {
+                console.error('gapi is not loaded');
+                return Promise.reject('gapi not loaded');
+            }
+            
             return new Promise((resolve, reject) => {
-                gapi.load('client:auth2', async () => {
-                    try {
-                        await gapi.client.init({
-                            apiKey: GOOGLE_CONFIG.API_KEY,
-                            clientId: GOOGLE_CONFIG.CLIENT_ID,
-                            scope: GOOGLE_CONFIG.SCOPES
-                        });
-                        
+                try {
+                    gapi.client.init({
+                        apiKey: GOOGLE_CONFIG.API_KEY,
+                        clientId: GOOGLE_CONFIG.CLIENT_ID,
+                        scope: GOOGLE_CONFIG.SCOPES
+                    }).then(() => {
                         this.auth = gapi.auth2.getAuthInstance();
                         this.auth.isSignedIn.listen((isSignedIn) => {
                             this.handleSignInStatus(isSignedIn);
@@ -369,11 +376,14 @@
                         
                         console.log('Google Drive Sync initialized');
                         resolve();
-                    } catch (error) {
+                    }).catch(error => {
                         console.error('Init error:', error);
                         reject(error);
-                    }
-                });
+                    });
+                } catch (error) {
+                    console.error('Init error:', error);
+                    reject(error);
+                }
             });
         }
         
@@ -414,7 +424,6 @@
         }
         
         async syncData() {
-            // 簡易同期実装
             console.log('Syncing data with Google Drive...');
         }
     }
@@ -422,24 +431,62 @@
     // ==================== 初期化 ====================
     let googleSync = null;
     
-    // Google連携ボタンの設定
-    document.addEventListener('DOMContentLoaded', () => {
-        const googleSignInBtn = document.getElementById('googleSignInBtn');
-        
-        if (googleSignInBtn) {
-            googleSignInBtn.addEventListener('click', async () => {
-                console.log('Google Sign In button clicked');
-                
-                try {
-                    if (!googleSync) {
-                        googleSync = new GoogleDriveSync();
+    // gapiの読み込みを待ってから初期化
+    function initGoogleAPI() {
+        if (typeof gapi !== 'undefined') {
+            gapi.load('client:auth2', function() {
+                gapi.client.init({
+                    apiKey: GOOGLE_CONFIG.API_KEY,
+                    clientId: GOOGLE_CONFIG.CLIENT_ID,
+                    scope: GOOGLE_CONFIG.SCOPES
+                }).then(function() {
+                    console.log('Google API initialized successfully');
+                    
+                    // GoogleDriveSyncインスタンスを作成
+                    googleSync = new GoogleDriveSync();
+                    
+                    // ボタンイベントを設定
+                    const googleSignInBtn = document.getElementById('googleSignInBtn');
+                    if (googleSignInBtn) {
+                        googleSignInBtn.addEventListener('click', async () => {
+                            console.log('Google Sign In button clicked');
+                            try {
+                                await googleSync.toggleSignIn();
+                            } catch (error) {
+                                console.error('Sign in error:', error);
+                                alert('Google連携でエラーが発生しました: ' + error.message);
+                            }
+                        });
                     }
-                    await googleSync.toggleSignIn();
-                } catch (error) {
-                    console.error('Sign in error:', error);
-                    alert('Google連携でエラーが発生しました: ' + error.message);
-                }
+                }).catch(function(error) {
+                    console.error('Error initializing Google API:', error);
+                });
             });
+        } else {
+            // gapiがまだ読み込まれていない場合は再試行
+            console.log('Waiting for gapi to load...');
+            setTimeout(initGoogleAPI, 1000);
+        }
+    }
+    
+    // ページ読み込み後に初期化
+    window.addEventListener('load', function() {
+        setTimeout(initGoogleAPI, 1000);
+    });
+    
+    // その他の関数
+    function closeModal() {
+        document.getElementById('reportModal').classList.remove('show');
+    }
+    
+    function printReport() {
+        window.print();
+    }
+    
+    function downloadPDF() {
+        window.print();
+    }
+</script>
         }
         
         // 手動同期ボタン
@@ -468,6 +515,7 @@
     </script>
 </body>
 </html>
+
 
 
 
