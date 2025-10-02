@@ -1,7 +1,7 @@
 // ==================== Google Drive同期システム ====================
 class GoogleDriveSync {
     constructor() {
-        // Google APIの設定（ここに取得した情報を入力）
+        // 179874464431-2gkjdolnfd9tbooegigp5upmkme4rbfh.apps.googleusercontent.com
         this.CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
         this.API_KEY = 'YOUR_API_KEY';
         this.DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
@@ -443,4 +443,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // グローバル変数として設定（他のスクリプトからアクセス可能）
     window.expenseManager = expenseManager;
+
 });
