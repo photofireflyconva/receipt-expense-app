@@ -62,7 +62,7 @@
     </style>
 </head>
 <!-- Google APIs (gapi) を先に読み込む -->
-<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
     // gapiが読み込まれたら初期化
     function handleClientLoad() {
@@ -337,140 +337,57 @@
     <!-- Google Drive同期（インライン版） -->
     <script>
     // ==================== 設定 ====================
-        const GOOGLE_CONFIG = {
-        CLIENT_ID: '179874464431-tju99rmjcqqurjvooll186ph20l4197b.apps.googleusercontent.com',
-        API_KEY: 'AIzaSyC0RxZKGhuL6aE9usKKYzBMT9zu13P_mXw',
+    const GOOGLE_CONFIG = {
+        CLIENT_ID: 'あなたの新しいCLIENT_ID.apps.googleusercontent.com',
         SCOPES: 'https://www.googleapis.com/auth/drive.file'
     };
     
-    // ==================== Google Drive同期 ====================
-    class GoogleDriveSync {
-        constructor() {
-            this.isInitialized = false;
-            this.isSignedIn = false;
-            this.auth = null;
-        }
-        
-        async init() {
-            // gapiが存在することを確認
-            if (typeof gapi === 'undefined') {
-                console.error('gapi is not loaded');
-                return Promise.reject('gapi not loaded');
-            }
-            
-            return new Promise((resolve, reject) => {
-                try {
-                    gapi.client.init({
-                        apiKey: GOOGLE_CONFIG.API_KEY,
-                        clientId: GOOGLE_CONFIG.CLIENT_ID,
-                        scope: GOOGLE_CONFIG.SCOPES
-                    }).then(() => {
-                        this.auth = gapi.auth2.getAuthInstance();
-                        this.auth.isSignedIn.listen((isSignedIn) => {
-                            this.handleSignInStatus(isSignedIn);
-                        });
-                        
-                        this.handleSignInStatus(this.auth.isSignedIn.get());
-                        this.isInitialized = true;
-                        
-                        console.log('Google Drive Sync initialized');
-                        resolve();
-                    }).catch(error => {
-                        console.error('Init error:', error);
-                        reject(error);
-                    });
-                } catch (error) {
-                    console.error('Init error:', error);
-                    reject(error);
-                }
-            });
-        }
-        
-        handleSignInStatus(isSignedIn) {
-            this.isSignedIn = isSignedIn;
-            this.updateUI();
-            
-            if (isSignedIn) {
-                this.syncData();
-            }
-        }
-        
-        updateUI() {
-            const signInBtn = document.getElementById('googleSignInBtn');
-            const syncStatus = document.getElementById('syncStatus');
-            
-            if (this.isSignedIn) {
-                signInBtn.innerHTML = '🔓 Googleアカウント切断';
-                syncStatus.innerHTML = '✅ 同期: ON';
-                syncStatus.classList.add('active');
-            } else {
-                signInBtn.innerHTML = '🔐 Googleドライブと連携';
-                syncStatus.innerHTML = '❌ 同期: OFF';
-                syncStatus.classList.remove('active');
-            }
-        }
-        
-        async toggleSignIn() {
-            if (!this.isInitialized) {
-                await this.init();
-            }
-            
-            if (this.isSignedIn) {
-                await this.auth.signOut();
-            } else {
-                await this.auth.signIn();
-            }
-        }
-        
-        async syncData() {
-            console.log('Syncing data with Google Drive...');
-        }
-    }
+    // ==================== 新しいGoogle認証 ====================
+    let accessToken = null;
     
-    // ==================== 初期化 ====================
-    let googleSync = null;
-    
-    // gapiの読み込みを待ってから初期化
-    function initGoogleAPI() {
-        if (typeof gapi !== 'undefined') {
-            gapi.load('client:auth2', function() {
-                gapi.client.init({
-                    apiKey: GOOGLE_CONFIG.API_KEY,
-                    clientId: GOOGLE_CONFIG.CLIENT_ID,
-                    scope: GOOGLE_CONFIG.SCOPES
-                }).then(function() {
-                    console.log('Google API initialized successfully');
-                    
-                    // GoogleDriveSyncインスタンスを作成
-                    googleSync = new GoogleDriveSync();
-                    
-                    // ボタンイベントを設定
-                    const googleSignInBtn = document.getElementById('googleSignInBtn');
-                    if (googleSignInBtn) {
-                        googleSignInBtn.addEventListener('click', async () => {
-                            console.log('Google Sign In button clicked');
-                            try {
-                                await googleSync.toggleSignIn();
-                            } catch (error) {
-                                console.error('Sign in error:', error);
-                                alert('Google連携でエラーが発生しました: ' + error.message);
-                            }
-                        });
-                    }
-                }).catch(function(error) {
-                    console.error('Error initializing Google API:', error);
+    function initGoogleAuth() {
+        const client = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CONFIG.CLIENT_ID,
+            scope: GOOGLE_CONFIG.SCOPES,
+            callback: (response) => {
+                accessToken = response.access_token;
+                console.log('認証成功！');
+                updateUISignedIn();
+                // ここでGoogle Drive APIを使用可能
+            },
+        });
+        
+        // ボタンクリック時の処理
+        document.getElementById('googleSignInBtn').addEventListener('click', () => {
+            if (accessToken === null) {
+                // トークンをリクエスト
+                client.requestAccessToken();
+            } else {
+                // ログアウト
+                google.accounts.oauth2.revoke(accessToken, () => {
+                    accessToken = null;
+                    updateUISignedOut();
+                    console.log('ログアウトしました');
                 });
-            });
-        } else {
-            // gapiがまだ読み込まれていない場合は再試行
-            console.log('Waiting for gapi to load...');
-            setTimeout(initGoogleAPI, 1000);
-        }
+            }
+        });
     }
     
-    // ページ読み込み後に初期化
-    window.addEventListener('load', function() {
-        setTimeout(initGoogleAPI, 1000);
+    function updateUISignedIn() {
+        document.getElementById('googleSignInBtn').innerHTML = '🔓 Googleアカウント切断';
+        document.getElementById('syncStatus').innerHTML = '✅ 同期: ON';
+        document.getElementById('syncStatus').classList.add('active');
+    }
+    
+    function updateUISignedOut() {
+        document.getElementById('googleSignInBtn').innerHTML = '🔐 Googleドライブと連携';
+        document.getElementById('syncStatus').innerHTML = '❌ 同期: OFF';
+        document.getElementById('syncStatus').classList.remove('active');
+    }
+    
+    // ページ読み込み時に初期化
+    window.addEventListener('load', () => {
+        initGoogleAuth();
     });
     
     // その他の関数
@@ -514,6 +431,7 @@
     </script>
 </body>
 </html>
+
 
 
 
