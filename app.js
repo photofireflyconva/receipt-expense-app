@@ -1,3 +1,185 @@
+// ==================== Supabase設定 ====================
+const SUPABASE_URL = 'あなたのSupabaseプロジェクトURL';
+const SUPABASE_ANON_KEY = 'あなたのSupabaseアノンキー';
+const CLOUDFLARE_WORKER_URL = 'あなたのCloudflare WorkerのURL';
+
+// Supabaseクライアント初期化
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 現在のユーザー状態
+let currentUser = null;
+
+// ==================== 認証関連 ====================
+// UI更新関数
+function updateAuthUI(user) {
+    const signInBtn = document.getElementById('googleSignInBtn');
+    const syncStatus = document.getElementById('syncStatus');
+    
+    if (user) {
+        currentUser = user;
+        if (signInBtn) signInBtn.innerHTML = '🔓 ログアウト';
+        if (syncStatus) {
+            syncStatus.innerHTML = '✅ ログイン中';
+            syncStatus.classList.add('active');
+        }
+        // ユーザーデータを読み込み
+        loadUserExpenses();
+    } else {
+        currentUser = null;
+        if (signInBtn) signInBtn.innerHTML = '🔐 Googleでログイン';
+        if (syncStatus) {
+            syncStatus.innerHTML = '❌ ログアウト中';
+            syncStatus.classList.remove('active');
+        }
+        // ローカルデータをクリア
+        clearUserData();
+    }
+}
+
+// 認証状態の監視
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('Auth event:', event);
+    updateAuthUI(session?.user || null);
+});
+
+// ログイン/ログアウト処理
+async function toggleAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
+        // ログアウト
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            console.error('ログアウトエラー:', error);
+            showNotification('ログアウトに失敗しました', 'error');
+        }
+    } else {
+        // ログイン
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.href
+            }
+        });
+        if (error) {
+            console.error('ログインエラー:', error);
+            showNotification('ログインに失敗しました', 'error');
+        }
+    }
+}
+
+// ==================== データ操作 ====================
+// 画像アップロード
+async function uploadImage(file) {
+    if (!currentUser) throw new Error('ログインが必要です');
+    
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) throw new Error('認証セッションが無効です');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch(CLOUDFLARE_WORKER_URL, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${session.access_token}`
+        },
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error('画像のアップロードに失敗しました');
+    }
+    
+    return await response.json();
+}
+
+// 経費をSupabaseに保存
+async function saveExpenseToSupabase(expenseData, imageFile) {
+    if (!currentUser) {
+        showNotification('ログインしてください', 'error');
+        return false;
+    }
+    
+    try {
+        showProgress();
+        
+        let imageUrl = null;
+        if (imageFile) {
+            const uploadResult = await uploadImage(imageFile);
+            imageUrl = uploadResult.url;
+        }
+        
+        const expense = {
+            user_id: currentUser.id,
+            store_name: expenseData.storeName || null,
+            category: expenseData.category,
+            amount: expenseData.amount,
+            date: expenseData.date,
+            payment_method: expenseData.paymentMethod || '現金',
+            project: expenseData.project || null,
+            memo: expenseData.memo || null,
+            invoice_number: expenseData.invoiceNumber || null,
+            tax_excluded: expenseData.taxExcluded || null,
+            tax: expenseData.tax || null,
+            image_url: imageUrl,
+            status: 'active'
+        };
+        
+        const { data, error } = await supabaseClient
+            .from('expenses')
+            .insert([expense])
+            .select();
+        
+        if (error) throw error;
+        
+        hideProgress();
+        showNotification('経費をクラウドに保存しました', 'success');
+        return true;
+        
+    } catch (error) {
+        hideProgress();
+        console.error('保存エラー:', error);
+        showNotification('保存に失敗しました: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// ユーザーの経費データを読み込み
+async function loadUserExpenses() {
+    if (!currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('expenses')
+            .select('*')
+            .eq('status', 'active')
+            .order('date', { ascending: false });
+        
+        if (error) throw error;
+        
+        // 既存のExpenseManagerに統合
+        if (window.expenseManager) {
+            window.expenseManager.expenses = data || [];
+            window.expenseManager.renderExpenses();
+            window.expenseManager.updateStats();
+        }
+        
+    } catch (error) {
+        console.error('データ読み込みエラー:', error);
+        showNotification('データの読み込みに失敗しました', 'error');
+    }
+}
+
+// ローカルデータをクリア
+function clearUserData() {
+    if (window.expenseManager) {
+        window.expenseManager.expenses = [];
+        window.expenseManager.renderExpenses();
+        window.expenseManager.updateStats();
+    }
+}
 // ==================== 経費精算アプリ メインロジック ====================
 
 class ExpenseManager {
@@ -941,4 +1123,5 @@ window.addEventListener('beforeinstallprompt', (e) => {
     document.body.appendChild(installButton);
 
 });
+
 
