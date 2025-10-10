@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80'>📱</text></svg>">
     <link rel="stylesheet" href="styles.css">
-     script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Google Drive同期用スタイル -->
     <style>
@@ -62,16 +62,12 @@
     </style>
 </head>
 <!-- Google APIs (gapi) を先に読み込む -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script>
     // gapiが読み込まれたら初期化
     function handleClientLoad() {
         gapi.load('client:auth2', function() {
             console.log('GAPI client loaded');
         });
     }
-</script>
-<script src="https://apis.google.com/js/api.js?onload=handleClientLoad"></script>
 <body>
     <!-- Google Drive同期バー（最上部） -->
     <div class="sync-container">
@@ -334,57 +330,7 @@
     <!-- Google API -->
      <script src="https://accounts.google.com/gsi/client"></script>
     
-    <!-- Google Drive同期（インライン版） -->
-    <script>
-    // ==================== 設定 ====================
-    const GOOGLE_CONFIG = {
-        CLIENT_ID: '179874464431-tju99rmjcqqurjvooll186ph20l4197b.apps.googleusercontent.com',
-        SCOPES: 'https://www.googleapis.com/auth/drive.file'
-    };
-    
-    // ==================== 新しいGoogle認証 ====================
-    let accessToken = null;
-    
-    function initGoogleAuth() {
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CONFIG.CLIENT_ID,
-            scope: GOOGLE_CONFIG.SCOPES,
-            callback: (response) => {
-                accessToken = response.access_token;
-                console.log('認証成功！');
-                updateUISignedIn();
-                // ここでGoogle Drive APIを使用可能
-            },
-        });
-        
-        // ボタンクリック時の処理
-        document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            if (accessToken === null) {
-                // トークンをリクエスト
-                client.requestAccessToken();
-            } else {
-                // ログアウト
-                google.accounts.oauth2.revoke(accessToken, () => {
-                    accessToken = null;
-                    updateUISignedOut();
-                    console.log('ログアウトしました');
-                });
-            }
-        });
-    }
-    
-    function updateUISignedIn() {
-        document.getElementById('googleSignInBtn').innerHTML = '🔓 Googleアカウント切断';
-        document.getElementById('syncStatus').innerHTML = '✅ 同期: ON';
-        document.getElementById('syncStatus').classList.add('active');
-    }
-    
-    function updateUISignedOut() {
-        document.getElementById('googleSignInBtn').innerHTML = '🔐 Googleドライブと連携';
-        document.getElementById('syncStatus').innerHTML = '❌ 同期: OFF';
-        document.getElementById('syncStatus').classList.remove('active');
-    }
-    
+             
     // ページ読み込み時に初期化
     window.addEventListener('load', () => {
         initGoogleAuth();
@@ -431,6 +377,7 @@
     </script>
 </body>
 </html>
+
 
 
 
