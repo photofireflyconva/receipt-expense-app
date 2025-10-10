@@ -470,40 +470,53 @@ class ExpenseManager {
     }
 
     // ==================== 経費保存 ====================
-    saveExpense() {
-        const category = document.getElementById('category').value;
-        const amount = document.getElementById('amount').value;
-        const date = document.getElementById('expenseDate').value;
+    async saveExpense() {
+    const category = document.getElementById('category').value;
+    const amount = document.getElementById('amount').value;
+    const date = document.getElementById('expenseDate').value;
 
-        // バリデーション
-        if (!category || !amount || !date) {
-            this.showNotification('必須項目を入力してください', 'error');
-            return;
-        }
+    // バリデーション
+    if (!category || !amount || !date) {
+        this.showNotification('必須項目を入力してください', 'error');
+        return;
+    }
 
+    const expenseData = {
+        storeName: document.getElementById('storeName').value,
+        category: category,
+        amount: parseFloat(amount),
+        date: date,
+        paymentMethod: document.getElementById('paymentMethod').value,
+        project: document.getElementById('project').value,
+        memo: document.getElementById('memo').value,
+        invoiceNumber: document.getElementById('invoiceNumber').value,
+        taxExcluded: Math.floor(amount / 1.1),
+        tax: amount - Math.floor(amount / 1.1)
+    };
+
+    const imageFile = document.getElementById('receiptInput').files[0] || null;
+
+    // Supabaseに保存を試行
+    const cloudSaved = await saveExpenseToSupabase(expenseData, imageFile);
+    
+    if (!cloudSaved) {
+        // クラウド保存に失敗した場合はローカルに保存
         const expense = {
             id: Date.now(),
-            storeName: document.getElementById('storeName').value,
-            category: category,
-            amount: parseFloat(amount),
-            date: date,
-            paymentMethod: document.getElementById('paymentMethod').value,
-            project: document.getElementById('project').value,
-            memo: document.getElementById('memo').value,
-            invoiceNumber: document.getElementById('invoiceNumber').value,
-            taxExcluded: Math.floor(amount / 1.1),
-            tax: amount - Math.floor(amount / 1.1),
+            ...expenseData,
             image: this.currentImage,
             createdAt: new Date().toISOString()
         };
-
+        
         this.expenses.push(expense);
         this.saveToLocalStorage();
-        this.renderExpenses();
-        this.updateStats();
-        this.clearForm();
-        this.showNotification('経費を保存しました', 'success');
+        this.showNotification('ローカルに保存しました', 'warning');
     }
+    
+    this.renderExpenses();
+    this.updateStats();
+    this.clearForm();
+}
 
     // ==================== LocalStorage保存 ====================
     saveToLocalStorage() {
@@ -958,6 +971,7 @@ function downloadPDF() {
 var expenseManager;
 
 // DOMContentLoadedで初期化
+// 既存のDOMContentLoadedイベントリスナーを修正
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing app...');
     
@@ -970,39 +984,10 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Failed to initialize ExpenseManager:', error);
     }
     
-    // Googleドライブ連携ボタンの設定
+    // Supabase認証ボタンの設定
     const googleSignInBtn = document.getElementById('googleSignInBtn');
     if (googleSignInBtn) {
-        console.log('Setting up Google Sign In button...');
-        
-        googleSignInBtn.addEventListener('click', function() {
-            console.log('Google Sign In button clicked');
-            
-            // GoogleDriveSyncの初期化を試みる
-            if (typeof GoogleDriveSync !== 'undefined') {
-                if (!window.googleSync) {
-                    try {
-                        window.googleSync = new GoogleDriveSync();
-                        window.googleSync.init().then(function() {
-                            console.log('Google Drive Sync initialized');
-                            window.googleSync.toggleSignIn();
-                        }).catch(function(error) {
-                            console.error('Google Drive Sync init error:', error);
-                            alert('Google Drive連携の初期化に失敗しました');
-                        });
-                    } catch (error) {
-                        console.error('Failed to create GoogleDriveSync:', error);
-                    }
-                } else {
-                    window.googleSync.toggleSignIn();
-                }
-            } else {
-                console.error('GoogleDriveSync class not found');
-                alert('Google Drive同期機能が読み込まれていません');
-            }
-        });
-    } else {
-        console.error('Google Sign In button not found');
+        googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
 
@@ -1123,5 +1108,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     document.body.appendChild(installButton);
 
 });
+
 
 
