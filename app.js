@@ -275,12 +275,9 @@ class ExpenseManager {
         reader.onload = async (e) => {
             const resizedImageSrc = await this.resizeImage(e.target.result, 1500);
             this.displayImagePreview(resizedImageSrc);
-            //OCR機能を一時停止
-            //this.performOCR(resizedImageSrc);
-             // AI解析結果のセクションを表示して、手入力できるようにする
-        const resultDiv = document.getElementById('ocrResult');
-        if (resultDiv) resultDiv.classList.remove('hidden');
-        document.getElementById('storeName').focus(); // 店舗名にフォーカス
+            // ★★★ 変更点 ★★★
+            // リサイズ後の画像ではなく、元のFileオブジェクトを渡す
+            this.performOCR(this.currentImageFile); 
         };
         reader.readAsDataURL(file);
     }
@@ -314,35 +311,52 @@ class ExpenseManager {
         }
     }
 
-    async performOCR(imageSrc) {
+   // app.js (performOCRメソッドを置き換え)
+    async performOCR(imageFile) { // 引数をリサイズ後のbase64ではなく、元のFileオブジェクトに変更
         const statusDiv = document.getElementById('ocrStatus');
-        const resultDiv = document.getElementById('ocrResult');
-        if (statusDiv) statusDiv.textContent = '🔄 AI解析中...';
-        showProgress('AI解析中...');
+        if (statusDiv) statusDiv.textContent = '🤖 Geminiで解析中...';
+        showProgress('Geminiで解析中...');
 
         try {
-            const worker = await Tesseract.createWorker('jpn');
-            const { data: { text } } = await worker.recognize(imageSrc, {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        const progress = Math.round(m.progress * 100);
-                        if (statusDiv) statusDiv.textContent = `🔄 解析中... ${progress}%`;
-                    }
-                }
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            
+            // Cloudflare Workerに画像を送って解析を依頼
+            const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                method: 'POST',
+                body: formData,
+                // Supabaseの認証トークンが必要な場合はヘッダーに追加
+                // headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
-            await worker.terminate();
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API request failed: ${errorText}`);
+            }
 
-            this.extractDataFromText(text);
-            if (statusDiv) statusDiv.textContent = '✅ 解析完了';
-            if (resultDiv) resultDiv.classList.remove('hidden');
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                // フォームに自動入力
+                document.getElementById('storeName').value = result.data.storeName || '';
+                document.getElementById('amount').value = result.data.totalAmount || '';
+                document.getElementById('expenseDate').value = result.data.transactionDate || '';
+                this.calculateTax(); // 税額を再計算
+                if (statusDiv) statusDiv.textContent = '✅ 解析完了';
+                document.getElementById('ocrResult').classList.remove('hidden');
+            } else {
+                throw new Error(result.error || '解析データが正しくありません。');
+            }
+
         } catch (error) {
-            console.error('OCR Error:', error);
+            console.error('Gemini OCR Error:', error);
             if (statusDiv) statusDiv.textContent = '❌ 解析エラー';
-            showNotification('画像の解析に失敗しました', 'error');
+            showNotification('画像の解析に失敗しました。', 'error');
         } finally {
             hideProgress();
         }
     }
+
 
     extractDataFromText(text) {
         console.log('OCR結果:', text);
@@ -631,6 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
