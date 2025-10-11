@@ -65,6 +65,7 @@
     }
     </style>
 </head>
+    
 <body>
     <!-- Google Drive同期バー → Supabase同期バーに変更 -->
     <div class="sync-container">
@@ -99,7 +100,6 @@
             </div>
         </div>
     </header>
-
     <!-- メインコンテンツ（変更なし） -->
     <main class="app-main">
         <!-- レシート撮影エリア -->
@@ -331,8 +331,55 @@
             if (window.expenseManager) window.expenseManager.downloadPDF();
         }
     </script>
+    <!-- ▼▼▼ ここから追加 ▼▼▼ -->
+<!-- 編集モーダル -->
+<div id="editModal" class="modal" style="display: none;"> <!-- 初期状態は非表示 -->
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>経費を編集</h2>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="expense-form">
+            <input type="hidden" id="editExpenseId"> <!-- 経費のIDを保持 -->
+
+            <div class="form-group">
+                <label>日付</label>
+                <input type="date" id="editDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>店舗名</label>
+                <input type="text" id="editStoreName" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>カテゴリー</label>
+                <select id="editCategory" class="form-control">
+                    <option value="交通費">🚃 交通費</option>
+                    <option value="会議費">☕ 会議費</option>
+                    <option value="接待交際費">🍽️ 接待交際費</option>
+                    <option value="消耗品費">📎 消耗品費</option>
+                    <option value="通信費">📱 通信費</option>
+                    <option value="図書研究費">📚 図書研究費</option>
+                    <option value="旅費交通費">✈️ 旅費交通費</option>
+                    <option value="その他">📝 その他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>金額（税込）</label>
+                <input type="number" id="editAmount" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>備考</label>
+                <input type="text" id="editMemo" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="updateExpense()" class="btn btn-primary">更新</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
+
 
 
 
