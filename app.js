@@ -355,7 +355,8 @@ class ExpenseManager {
         } catch (error) {
             console.error('Gemini OCR Error:', error);
             if (statusDiv) statusDiv.textContent = '❌ 解析エラー';
-            showNotification('画像の解析に失敗しました。', 'error');
+            // Workerからの詳細なエラーメッセージを表示する
+        showNotification(`解析に失敗しました: ${error.message}`, 'error');
         } finally {
             hideProgress();
         }
@@ -657,6 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
