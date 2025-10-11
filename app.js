@@ -188,7 +188,27 @@ function hideProgress() {
     const progressBar = document.getElementById('progressBar');
     if (progressBar) progressBar.classList.add('hidden');
 }
+// ▼▼▼ ここから追加 ▼▼▼
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    if (modal) modal.style.display = 'none';
+}
 
+async function updateExpense() {
+    if (!window.expenseManager) return;
+    const id = document.getElementById('editExpenseId').value;
+    
+    const updatedData = {
+        date: document.getElementById('editDate').value,
+        store_name: document.getElementById('editStoreName').value,
+        category: document.getElementById('editCategory').value,
+        amount: parseFloat(document.getElementById('editAmount').value),
+        memo: document.getElementById('editMemo').value,
+    };
+
+    await window.expenseManager.updateExpenseInCloud(id, updatedData);
+    closeEditModal();
+}
 
 // ==================== 経費精算アプリ メインロジック ====================
 class ExpenseManager {
@@ -247,7 +267,12 @@ class ExpenseManager {
         reader.onload = async (e) => {
             const resizedImageSrc = await this.resizeImage(e.target.result, 1500);
             this.displayImagePreview(resizedImageSrc);
-            this.performOCR(resizedImageSrc);
+            //OCR機能を一時停止
+            //this.performOCR(resizedImageSrc);
+             // AI解析結果のセクションを表示して、手入力できるようにする
+        const resultDiv = document.getElementById('ocrResult');
+        if (resultDiv) resultDiv.classList.remove('hidden');
+        document.getElementById('storeName').focus(); // 店舗名にフォーカス
         };
         reader.readAsDataURL(file);
     }
@@ -446,12 +471,54 @@ class ExpenseManager {
         }
     }
 
+    // app.js (390行目あたりを置き換え)
     editExpense(id) {
         const expense = this.expenses.find(e => e.id === id);
         if (!expense) return;
-        // 編集機能は複雑になるため、今回は簡易的なアラート表示に留める
-        alert(`編集機能は実装中です。\nID: ${id}\n店舗: ${expense.store_name}\n金額: ${expense.amount}`);
-        // 実際にはフォームに値をセットし、更新処理を実装する
+
+        // モーダルに既存のデータをセット
+        document.getElementById('editExpenseId').value = expense.id;
+        document.getElementById('editDate').value = expense.date;
+        document.getElementById('editStoreName').value = expense.store_name || '';
+        document.getElementById('editCategory').value = expense.category;
+        document.getElementById('editAmount').value = expense.amount;
+        document.getElementById('editMemo').value = expense.memo || '';
+
+        // モーダルを表示
+        const modal = document.getElementById('editModal');
+        if (modal) modal.style.display = 'block';
+    }
+// ▼▼▼ ここから追加 ▼▼▼
+    async updateExpenseInCloud(id, updatedData) {
+        if (!currentUser) {
+            showNotification('ログインが必要です', 'error');
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('expenses')
+                .update(updatedData)
+                .match({ id: id, user_id: currentUser.id })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // ローカルのデータも更新
+            const index = this.expenses.findIndex(e => e.id === Number(id));
+            if (index > -1) {
+                this.expenses[index] = data;
+            }
+
+            this.renderExpenses();
+            this.updateStats();
+            showNotification('経費を更新しました', 'success');
+
+        } catch (error) {
+            console.error('更新エラー:', error);
+            showNotification('更新に失敗しました', 'error');
+        }
     }
 
     updateStats() {
@@ -531,6 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
