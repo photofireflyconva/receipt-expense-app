@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.supabase.co;
-    worker-src 'self' blob:;
-    connect-src *;
-    img-src * data: blob:;
-    frame-src 'self' https://*.supabase.co;
-    style-src 'self' 'unsafe-inline';
-">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Content-Security-Policy: Tesseract.jsとSupabaseの動作を許可 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.supabase.co;
+        worker-src 'self' blob:;
+        connect-src *;
+        img-src * data: blob:;
+        frame-src 'self' https://*.supabase.co;
+        style-src 'self' 'unsafe-inline';
+    ">
+
     <title>経費精算AI - レシート自動読み取り</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' font-size='80'>📱</text></svg>">
     <link rel="stylesheet" href="styles.css">
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Google Drive同期用スタイル -->
+    <!-- スタイル（変更なし） -->
     <style>
     .sync-container {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -29,7 +31,6 @@
         z-index: 1000;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    
     .sync-status-bar {
         max-width: 1200px;
         margin: 0 auto;
@@ -38,7 +39,6 @@
         gap: 1rem;
         flex-wrap: wrap;
     }
-    
     #googleSignInBtn {
         background: white;
         color: #4285f4;
@@ -48,43 +48,32 @@
         font-weight: 500;
         cursor: pointer;
     }
-    
     .sync-info {
         display: flex;
         align-items: center;
         gap: 1rem;
         flex: 1;
     }
-    
     #syncStatus.active { color: #4ade80; }
-    
     #syncIndicator.active {
         display: inline-block;
         animation: spin 1s linear infinite;
     }
-    
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
     </style>
 </head>
-<!-- Google APIs (gapi) を先に読み込む -->
-    // gapiが読み込まれたら初期化
-    function handleClientLoad() {
-        gapi.load('client:auth2', function() {
-            console.log('GAPI client loaded');
-        });
-    }
 <body>
-    <!-- Google Drive同期バー（最上部） -->
+    <!-- Google Drive同期バー → Supabase同期バーに変更 -->
     <div class="sync-container">
         <div class="sync-status-bar">
             <button id="googleSignInBtn" class="btn btn-primary">
-                🔐 Googleドライブと連携
+                🔐 Googleでログイン
             </button>
             <div class="sync-info">
-                <span id="syncStatus">❌ 同期: OFF</span>
+                <span id="syncStatus">❌ ログアウト中</span>
                 <span id="syncIndicator"></span>
                 <span id="lastSyncTime"></span>
             </div>
@@ -111,7 +100,7 @@
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
+    <!-- メインコンテンツ（変更なし） -->
     <main class="app-main">
         <!-- レシート撮影エリア -->
         <section class="capture-section">
@@ -125,14 +114,10 @@
                     </label>
                     <div class="upload-hint">またはファイルをドラッグ&ドロップ</div>
                 </div>
-                
-                <!-- プレビューエリア -->
                 <div id="imagePreview" class="image-preview hidden">
                     <img id="previewImg" alt="レシートプレビュー">
                     <div class="ocr-status" id="ocrStatus"></div>
                 </div>
-                
-                <!-- AI解析結果 -->
                 <div id="ocrResult" class="ocr-result hidden">
                     <h3>🤖 AI解析結果</h3>
                     <div class="extracted-data">
@@ -157,7 +142,6 @@
         <section class="input-section">
             <div class="expense-form">
                 <h2>経費詳細</h2>
-                
                 <div class="form-grid">
                     <div class="form-group">
                         <label>カテゴリー <span class="required">*</span></label>
@@ -173,7 +157,6 @@
                             <option value="その他">📝 その他</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>支払方法</label>
                         <select id="paymentMethod" class="form-control">
@@ -183,19 +166,15 @@
                             <option value="銀行振込">🏦 銀行振込</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>プロジェクト/クライアント</label>
                         <input type="text" id="project" class="form-control" placeholder="例：A社案件">
                     </div>
-                    
                     <div class="form-group">
                         <label>備考</label>
                         <input type="text" id="memo" class="form-control" placeholder="例：打ち合わせ">
                     </div>
                 </div>
-                
-                <!-- インボイス対応 -->
                 <div class="invoice-section">
                     <h3>インボイス情報</h3>
                     <div class="tax-calculation">
@@ -217,7 +196,6 @@
                         <input type="text" id="invoiceNumber" class="form-control" placeholder="T1234567890123">
                     </div>
                 </div>
-                
                 <button id="saveExpense" class="btn btn-primary">
                     <span>💾</span> 経費を保存
                 </button>
@@ -237,8 +215,6 @@
                     </button>
                 </div>
             </div>
-            
-            <!-- フィルター -->
             <div class="filter-bar">
                 <select id="filterMonth" class="filter-control">
                     <option value="">全期間</option>
@@ -248,8 +224,6 @@
                 </select>
                 <input type="text" id="searchBox" class="filter-control" placeholder="🔍 検索...">
             </div>
-            
-            <!-- 経費リスト -->
             <div id="expenseList" class="expense-list">
                 <div class="empty-state">
                     <span class="empty-icon">📋</span>
@@ -292,8 +266,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- カテゴリー別集計 -->
             <div class="category-breakdown">
                 <h3>カテゴリー別集計</h3>
                 <div id="categoryChart" class="chart-container"></div>
@@ -313,9 +285,7 @@
                 <h2>月次経費レポート</h2>
                 <button class="modal-close" onclick="closeModal()">×</button>
             </div>
-            <div id="reportContent" class="report-content">
-                <!-- レポート内容がここに生成される -->
-            </div>
+            <div id="reportContent" class="report-content"></div>
             <div class="modal-footer">
                 <button onclick="printReport()" class="btn btn-primary">印刷</button>
                 <button onclick="downloadPDF()" class="btn btn-secondary">PDF保存</button>
@@ -333,58 +303,37 @@
     </div>
 
     <!-- スクリプト読み込み（順序重要） -->
+    <!-- OCRライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- Supabaseライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- メインアプリケーションロジック -->
     <script src="app.js"></script>
-    
-    <!-- Google API -->
-     <script src="https://accounts.google.com/gsi/client"></script>
-    
-             
-    // ページ読み込み時に初期化
-    window.addEventListener('load', () => {
-        initGoogleAuth();
-    });
-    
-    // その他の関数
-    function closeModal() {
-        document.getElementById('reportModal').classList.remove('show');
-    }
-    
-    function printReport() {
-        window.print();
-    }
-    
-    function downloadPDF() {
-        window.print();
-    }
-</script>
+
+    <!-- モーダル制御用のシンプルなスクリプト -->
+    <script>
+        function closeModal() {
+            const modal = document.getElementById('reportModal');
+            if (modal) modal.style.display = 'none';
         }
-        
-        // 手動同期ボタン
-        const manualSyncBtn = document.getElementById('manualSyncBtn');
-        if (manualSyncBtn) {
-            manualSyncBtn.addEventListener('click', () => {
-                if (googleSync && googleSync.isSignedIn) {
-                    googleSync.syncData();
-                }
-            });
+        // モーダル外クリックで閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('reportModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
         }
-    });
-    
-    // ==================== その他の関数 ====================
-    function closeModal() {
-        document.getElementById('reportModal').classList.remove('show');
-    }
-    
-    function printReport() {
-        window.print();
-    }
-    
-    function downloadPDF() {
-        window.print();
-    }
+        // 印刷・PDF保存はapp.jsに任せる
+        function printReport() {
+            if (window.expenseManager) window.expenseManager.printReport();
+        }
+        function downloadPDF() {
+            if (window.expenseManager) window.expenseManager.downloadPDF();
+        }
     </script>
 </body>
 </html>
+
 
 
 
