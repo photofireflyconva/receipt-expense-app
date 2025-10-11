@@ -301,37 +301,7 @@
         <div class="progress-fill"></div>
         <span class="progress-text">処理中...</span>
     </div>
-
-    <!-- スクリプト読み込み（順序重要） -->
-    <!-- OCRライブラリ -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <!-- Supabaseライブラリ -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- メインアプリケーションロジック -->
-    <script src="app.js"></script>
-
-    <!-- モーダル制御用のシンプルなスクリプト -->
-    <script>
-        function closeModal() {
-            const modal = document.getElementById('reportModal');
-            if (modal) modal.style.display = 'none';
-        }
-        // モーダル外クリックで閉じる
-        window.onclick = function(event) {
-            const modal = document.getElementById('reportModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-        // 印刷・PDF保存はapp.jsに任せる
-        function printReport() {
-            if (window.expenseManager) window.expenseManager.printReport();
-        }
-        function downloadPDF() {
-            if (window.expenseManager) window.expenseManager.downloadPDF();
-        }
-    </script>
-    <!-- ▼▼▼ ここから追加 ▼▼▼ -->
+ <!-- ▼▼▼ ここから追加 ▼▼▼ -->
 <!-- 編集モーダル -->
 <div id="editModal" class="modal" style="display: none;"> <!-- 初期状態は非表示 -->
     <div class="modal-content">
@@ -377,8 +347,39 @@
         </div>
     </div>
 </div>
+    
+    <!-- スクリプト読み込み（順序重要） -->
+    <!-- OCRライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- Supabaseライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- メインアプリケーションロジック -->
+    <script src="app.js"></script>
+
+    <!-- モーダル制御用のシンプルなスクリプト -->
+    <script>
+        function closeModal() {
+            const modal = document.getElementById('reportModal');
+            if (modal) modal.style.display = 'none';
+        }
+        // モーダル外クリックで閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('reportModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        // 印刷・PDF保存はapp.jsに任せる
+        function printReport() {
+            if (window.expenseManager) window.expenseManager.printReport();
+        }
+        function downloadPDF() {
+            if (window.expenseManager) window.expenseManager.downloadPDF();
+        }
+    </script>
 </body>
 </html>
+
 
 
 
