@@ -410,7 +410,7 @@ class ExpenseManager {
     }
 
     clearForm() {
-        document.querySelector('.expense-form').reset();
+        document.getElementById('expense-form').reset();  
         document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('receiptInput').value = '';
         document.getElementById('imagePreview').classList.add('hidden');
@@ -598,6 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
