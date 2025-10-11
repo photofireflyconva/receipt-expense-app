@@ -345,7 +345,11 @@ class ExpenseManager {
                 if (statusDiv) statusDiv.textContent = '✅ 解析完了';
                 document.getElementById('ocrResult').classList.remove('hidden');
             } else {
-                throw new Error(result.error || '解析データが正しくありません。');
+               // ▼▼▼ ここを修正 ▼▼▼
+                // Workerからの詳細なエラー情報をコンソールに出力
+                console.error("解析APIからのエラー:", result); 
+                throw new Error(result.error || result.details?.message || '解析データが正しくありません。');
+                // ▲▲▲ ここまで ▲▲▲
             }
 
         } catch (error) {
@@ -653,6 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
