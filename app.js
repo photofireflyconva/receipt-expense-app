@@ -241,7 +241,7 @@ class ExpenseManager {
         // 税率ラジオボタンの変更を監視
         document.querySelectorAll('input[name="taxRate"]').forEach(radio => {
             radio.addEventListener('change', () => this.calculateTax());
-    }
+       });
 
     setupDragAndDrop() {
         const captureArea = document.getElementById('captureArea');
@@ -624,6 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
