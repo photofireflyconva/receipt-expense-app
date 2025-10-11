@@ -1,7 +1,7 @@
 // ==================== Supabase + Cloudflare R2 設定 ====================
 // ⚠️ 以下の値を必ず実際の値に置き換えてください！
 const SUPABASE_URL = 'https://syfisvqcoealxjmmiijm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZmlzdnFjb2VhbHhqbW1paWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0ODc4ODMsImV4cCI6MjA3NTA2Mzg4M30.J4sUJREbL5PIyV9riZ2vvvgSi0WpYER1xT752yjThxw';';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZmlzdnFjb2VhbHhqbW1paWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0ODc4ODMsImV4cCI6MjA3NTA2Mzg4M30.J4sUJREbL5PIyV9riZ2vvvgSi0WpYER1xT752yjThxw';
 const CLOUDFLARE_WORKER_URL = 'https://receipt-upload-api.photo-firefly-conva.workers.dev/';
 
 // Supabaseクライアント初期化
@@ -531,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
