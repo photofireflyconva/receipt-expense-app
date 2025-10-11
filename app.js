@@ -204,6 +204,7 @@ async function updateExpense() {
         category: document.getElementById('editCategory').value,
         amount: parseFloat(document.getElementById('editAmount').value),
         memo: document.getElementById('editMemo').value,
+         tax_rate: parseInt(document.querySelector('input[name="editTaxRate"]:checked').value)
     };
 
     await window.expenseManager.updateExpenseInCloud(id, updatedData);
@@ -416,7 +417,8 @@ class ExpenseManager {
             paymentMethod: document.getElementById('paymentMethod').value,
             project: document.getElementById('project').value, memo: document.getElementById('memo').value,
             invoiceNumber: document.getElementById('invoiceNumber').value,
-            taxExcluded: Math.floor(parseFloat(amount) / 1.1), tax: parseFloat(amount) - Math.floor(parseFloat(amount) / 1.1)
+            taxExcluded: Math.floor(parseFloat(amount) / 1.1), tax: parseFloat(amount) - Math.floor(parseFloat(amount) / 1.1),
+            tax_rate: parseInt(document.querySelector('input[name="taxRate"]:checked').value)
         };
 
         const savedData = await saveExpenseToSupabase(expenseData, this.currentImageFile);
@@ -502,7 +504,12 @@ class ExpenseManager {
         document.getElementById('editCategory').value = expense.category;
         document.getElementById('editAmount').value = expense.amount;
         document.getElementById('editMemo').value = expense.memo || '';
-
+ // ▼▼▼ このブロックを追加 ▼▼▼
+        // 保存されている税率をラジオボタンに反映
+        const taxRate = expense.tax_rate || 10; // データがなければ10%をデフォルトに
+        document.querySelector(`input[name="editTaxRate"][value="${taxRate}"]`).checked = true;
+        // ▲▲▲ ここまで ▲▲▲
+    
         // モーダルを表示
         const modal = document.getElementById('editModal');
         if (modal) modal.style.display = 'block';
@@ -617,6 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
