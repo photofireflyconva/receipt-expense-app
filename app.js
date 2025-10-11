@@ -137,6 +137,7 @@ async function saveExpenseToSupabase(expenseData, imageFile) {
 
 async function loadUserExpenses() {
     if (!currentUser) return;
+　showProgress('データを読み込み中...'); 
     
     try {
         const { data, error } = await supabaseClient
@@ -156,8 +157,10 @@ async function loadUserExpenses() {
         
     } catch (error) {
         console.error('データ読み込みエラー:', error);
-    }
+    }finally {
+        hideProgress(); // ← 追加
 }
+    }
 
 function clearUserData() {
     if (window.expenseManager) {
@@ -479,6 +482,7 @@ class ExpenseManager {
     async deleteExpense(id) {
         if (!confirm('この経費を削除しますか？')) return;
         if (!currentUser) { showNotification('ログインが必要です', 'error'); return; }
+        showProgress('削除中...'); // ← 追加
 
         try {
             const { error } = await supabaseClient.from('expenses').delete().match({ id: id, user_id: currentUser.id });
@@ -490,10 +494,11 @@ class ExpenseManager {
         } catch (error) {
             console.error('削除エラー:', error);
             showNotification('削除に失敗しました', 'error');
-        }
+         } finally {
+            hideProgress(); // ← 追加
     }
-
-    // app.js (390行目あたりを置き換え)
+}
+    
     editExpense(id) {
         const expense = this.expenses.find(e => e.id === id);
         if (!expense) return;
@@ -519,8 +524,9 @@ class ExpenseManager {
     async updateExpenseInCloud(id, updatedData) {
         if (!currentUser) {
             showNotification('ログインが必要です', 'error');
-            return;
-        }
+            return;}
+             showProgress('更新中...');
+        
 
         try {
             const { data, error } = await supabaseClient
@@ -625,6 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
