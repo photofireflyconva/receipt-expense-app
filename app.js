@@ -493,25 +493,33 @@ class ExpenseManager {
         return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
     }
 
-    async deleteExpense(id) {
-        if (!confirm('この経費を削除しますか？')) return;
+     async deleteExpense(id) {
+        if (!confirm('この経費を削除しますか？\n（データは履歴としてシステム上に残ります）')) return;
         if (!currentUser) { showNotification('ログインが必要です', 'error'); return; }
-        showProgress('削除中...'); // ← 追加
+
+        showProgress('削除中...');
 
         try {
-            const { error } = await supabaseClient.from('expenses').delete().match({ id: id, user_id: currentUser.id });
+            // 物理削除(delete)ではなく、ステータスを更新(update)する
+            const { error } = await supabaseClient
+                .from('expenses')
+                .update({ status: 'deleted' }) // statusを'deleted'に変更
+                .match({ id: id, user_id: currentUser.id });
+            
             if (error) throw error;
+
+            // UI上から非表示にする
             this.expenses = this.expenses.filter(e => e.id !== id);
             this.renderExpenses();
             this.updateStats();
             showNotification('経費を削除しました', 'success');
         } catch (error) {
-            console.error('削除エラー:', error);
+            console.error('論理削除エラー:', error);
             showNotification('削除に失敗しました', 'error');
-         } finally {
-            hideProgress(); // ← 追加
+        } finally {
+            hideProgress();
+        }
     }
-}
     
     editExpense(id) {
         const expense = this.expenses.find(e => e.id === id);
@@ -645,6 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
