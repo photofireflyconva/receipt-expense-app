@@ -237,6 +237,9 @@ class ExpenseManager {
         document.getElementById('searchBox')?.addEventListener('input', () => this.filterExpenses());
         document.getElementById('filterMonth')?.addEventListener('change', () => this.filterExpenses());
         document.getElementById('filterCategory')?.addEventListener('change', () => this.filterExpenses());
+        // 税率ラジオボタンの変更を監視
+        document.querySelectorAll('input[name="taxRate"]').forEach(radio => {
+            radio.addEventListener('change', () => this.calculateTax());
     }
 
     setupDragAndDrop() {
@@ -376,12 +379,28 @@ class ExpenseManager {
     }
 
     calculateTax() {
-        const amount = parseFloat(document.getElementById('amount').value) || 0;
-        const taxExcluded10 = Math.floor(amount / 1.1);
-        const tax10 = amount - taxExcluded10;
-        document.getElementById('taxExcluded').textContent = `¥${taxExcluded10.toLocaleString()}`;
-        document.getElementById('taxAmount').textContent = `¥${tax10.toLocaleString()}`;
-        document.getElementById('taxAmount8').textContent = `¥0`;
+        const amountInput = document.getElementById('amount');
+        const amount = parseFloat(amountInput.value) || 0;
+
+        // 選択されている税率ラジオボタンの値を取得
+        const selectedRate = document.querySelector('input[name="taxRate"]:checked').value;
+        const taxRate = parseInt(selectedRate) / 100;
+
+        // 税抜金額と消費税額を計算
+        const taxExcluded = Math.round(amount / (1 + taxRate));
+        const tax = amount - taxExcluded;
+
+        // 表示を更新
+        document.getElementById('taxExcluded').textContent = `¥${taxExcluded.toLocaleString()}`;
+        
+        // 税率に応じて表示する場所を切り替える
+        if (selectedRate === '10') {
+            document.getElementById('taxAmount').textContent = `¥${tax.toLocaleString()}`;
+            document.getElementById('taxAmount8').textContent = `¥0`;
+        } else { // 8%の場合
+            document.getElementById('taxAmount').textContent = `¥0`;
+            document.getElementById('taxAmount8').textContent = `¥${tax.toLocaleString()}`;
+        }
     }
 
     async saveExpense() {
@@ -598,6 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
         googleSignInBtn.addEventListener('click', toggleAuth);
     }
 });
+
 
 
 
