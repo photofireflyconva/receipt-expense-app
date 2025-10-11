@@ -132,6 +132,18 @@
                         <div class="data-field">
                             <label>金額（税込）</label>
                             <input type="number" id="amount" placeholder="0">
+<!-- ▼▼▼ このブロックを「金額（税込）」の入力欄の直後に追加 ▼▼▼ -->
+<div class="form-group tax-rate-selector">
+    <label>税率</label>
+    <div class="radio-group">
+        <label>
+            <input type="radio" name="taxRate" value="10" checked> 10%
+        </label>
+        <label>
+            <input type="radio" name="taxRate" value="8"> 8% (軽減税率)
+        </label>
+    </div>
+</div>
                         </div>
                     </div>
                 </div>
@@ -379,6 +391,7 @@
     </script>
 </body>
 </html>
+
 
 
 
